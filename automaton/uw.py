@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from typing import Optional
 
 
-class UlamWarburtonWait:
+class UlamWarburton:
     def __init__(self, history: bool = True, initial_grid: Optional[np.ndarray] = None,
                  initial_size: int = 501,
                  death_time: int = np.inf, wait_time: int = 1, initially_dead: bool = False) -> None:

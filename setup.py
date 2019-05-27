@@ -9,7 +9,7 @@ setup(
     tests_require=["pytest"],
     test_suite="tests",
     install_requires=["numpy", "scipy", "matplotlib"],
-    version='0.0.1',
+    version='0.0.2',
     author='J. Marcus Hughes',
     author_email='hughes.jmb@gmail.com',
     packages=find_packages(),
