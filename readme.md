@@ -7,3 +7,6 @@ A simple implementation of the Ulam-Warburton Automaton with some variations:
 
 ## Installation
 Use `pip install . --user` after cloning or forking. 
+
+## Ideas
+* Add a randomness into the 
