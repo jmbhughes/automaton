@@ -161,7 +161,7 @@ class StructuralAutomaton:
             self.__iterate()
 
     def show(self, iteration: Optional[int] = None, view_size: Optional[int] = None,
-             save: Optional[str] = None, color_table: Optional[dict] = None) -> None:
+             save: Optional[str] = None, color_table: Optional[dict] = None, show_title: bool = False) -> None:
         """
         Show the automaton using Matplotlib as an image
         :param iteration: which iteration to show
@@ -170,6 +170,7 @@ class StructuralAutomaton:
         :param save:  Where to save the image. If None, it does not save.
         :param color_table: How to color the automaton. Give a dictionary with keys of states and values of colors.
             If None, uses Matplotlib's default
+        :param show_title: whether to print the iteration number as a title
         """
         # find the iteration
         if iteration is not None:
@@ -183,7 +184,8 @@ class StructuralAutomaton:
 
         # set up the color map if requested
         if color_table:
-            colors = [color_table[i] if i in color_table else "black" for i in range(1 + max(list(color_table.keys())))]
+            colors = [color_table[i] if i in color_table else "black" for i in range(min(list(color_table.keys())),
+                                                                                     1 + max(list(color_table.keys())))]
             cmap = ListedColormap(colors)
         else:
             cmap = None
@@ -198,7 +200,10 @@ class StructuralAutomaton:
 
         # refine the image parameters
         ax.set_axis_off()
+        if show_title:
+            ax.set_title("i={}".format(iteration))
 
+        fig.tight_layout()
         # show or save
         if save:
             fig.savefig(save)
@@ -266,8 +271,10 @@ class RegeneratingUWAutomaton(StructuralAutomaton):
         graph[delay] = [0]
 
         # setup the functions
-        functions = {0: {0: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] != 1,
-                         1: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] == 1}}
+        functions = {0: {0: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0],
+                                                                   patch[1, 2], patch[2, 1]])) > 0) != 1,
+                         1: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0],
+                                                                   patch[1, 2], patch[2, 1]])) > 0) == 1}}
         for i in range(1, delay):
             functions[i] = {i+1: lambda patch: True}
         functions[delay] = {0: lambda patch: True}
@@ -292,8 +299,10 @@ class ImmuneUWAutomaton(StructuralAutomaton):
             graph[i] = [i+1]
 
         # setup the functions
-        functions = {0: {0: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] != 1,
-                         1: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] == 1}}
+        functions = {0: {0: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0],
+                                                                   patch[1, 2], patch[2, 1]])) > 0) != 1,
+                         1: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0] +
+                                                                   patch[1, 2], patch[2, 1]])) > 0) == 1}}
         for i in range(-delay, 0):
             functions[i] = {i + 1: lambda patch: True}
         super().__init__(initial_grid, lambda n: n-delay if n < delay else 0, graph, functions, 3,
@@ -320,7 +329,7 @@ class ImmuneRegeneratingUWAutomaton(StructuralAutomaton):
         # these are the additional states for on_period generations before shutting back off
         for i in range(1, on_period):
             graph[i] = [i+1]
-        graph[on_period] = -off_period
+        graph[on_period] = [-off_period]
 
         # these are the additional states for off_period generations where a cell is immune and won't turn on
         for i in range(-off_period, 0):
@@ -328,13 +337,15 @@ class ImmuneRegeneratingUWAutomaton(StructuralAutomaton):
 
         # setup th functions
         # the basic UW
-        functions = {0: {0: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] != 1,
-                         1: lambda patch: patch[0, 1] + patch[1, 0] + patch[1, 2] + patch[2, 1] == 1}}
+        functions = {0: {0: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0],
+                                                                   patch[1, 2], patch[2, 1]])) > 0) != 1,
+                         1: lambda patch: np.sum(np.sign(np.array([patch[0, 1], patch[1, 0],
+                                                                   patch[1, 2], patch[2, 1]])) > 0) == 1}}
 
         # functions for on transitions
         for i in range(1, on_period):
             functions[i] = {i+1: lambda patch: True}
-        functions[on_period] = {0: lambda patch: True}
+        functions[on_period] = {-off_period: lambda patch: True}
 
         # functions for off transitions
         for i in range(-off_period, 0):
